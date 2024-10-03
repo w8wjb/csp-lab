@@ -1,0 +1,31 @@
+{
+  "name": "csp-lab",
+  "version": "1.0.0",
+  "description": "Develop Content Security Policies (CSP) for your website",
+  "homepage": "https://github.com/w8wjb/csp-lab#readme",
+  "author": "Wes Bustraan",
+  "license": "MPL-2.0",
+  "scripts": {
+    "build": "npm run compile",
+    "compile": "webpack"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/w8wjb/csp-lab"
+  },
+  "bugs": {
+    "url": "https://github.com/w8wjb/csp-lab/issues"
+  },
+  "devDependencies": {
+    "@babel/core": "^7.25.2",
+    "@babel/preset-env": "^7.25.4",
+    "babel-loader": "^9.2.1",
+    "copy-webpack-plugin": "^12.0.2",
+    "web-ext": "^8.3.0",
+    "webpack": "^5.95.0",
+    "webpack-cli": "^5.1.4"
+  },
+  "dependencies": {
+    "csp_evaluator": "^1.1.2"
+  }
+}

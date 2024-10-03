@@ -1,0 +1,14 @@
+{
+  "name": "CSP Lab",
+  "version": "0.1",
+  "manifest_version": 3,
+  "description": "Develop Content Security Policies (CSP) for your website",
+  "background": {
+    "service_worker": "service_worker.js"
+  },
+  "devtools_page": "devtools.html",
+  "host_permissions": [
+    "*://*/*"
+  ],
+  "permissions": ["declarativeNetRequest", "declarativeNetRequestFeedback", "webNavigation", "webRequest", "storage"]
+}
