@@ -1,32 +1,195 @@
-* {
-    box-sizing: border-box;
+.icon::before {
+    display: inline-block;
+    text-rendering: auto;
+    -webkit-font-smoothing: antialiased;
 }
 
-#rulesList {
-    margin-top: 20px;
-    display: flex;
-    flex-direction: column;
-    gap: 10px;
+body {
+    font-family: sans-serif;
+    margin: 1em;
 }
 
-.rule-item {
-    padding: 5px;
-    border: 1px solid #ccc;
-    border-radius: 10px;
-    position: relative;
+.directive-values {
+    font-size: 10pt;
+    margin-left: 4em;
 }
 
-.rule-id {
-    width: 4em;
+.directive-values code {
+    white-space: nowrap;
 }
 
-.condition-value {
-    width: 50em;
-    max-width: calc(100vw - 26px);
+td.comments {
+    padding-left: 1em;
 }
 
-.actions {
-    position: absolute;
-    top: 5px;
-    right: 5px;
+.indicator {
+    display: inline-block;
+    width: 1.25em;
+    text-align: center;
 }
+
+.directive .indicator::after {
+    /* If no severity is specified, mark it green */
+    font: var(--fa-font-solid);
+    content: '\f058';
+    color: #00cb00;
+}
+
+.severity-10 .indicator::after {
+    /* HIGH */
+    font: var(--fa-font-solid);
+    content: '\f06a';
+    color: #e32400;
+}
+
+.severity-20 .indicator::after {
+    /* SYNTAX */
+    font: var(--fa-font-solid);
+    content: '\f00d';
+    color: #5e30eb;
+}
+
+.severity-30 .indicator::after {
+    /* MEDIUM */
+    font: var(--fa-font-solid);
+    content: '\f06a';
+    color: #ff8647;
+}
+
+.severity-40 .indicator::after {
+    /* HIGH_MAYBE */
+    font: var(--fa-font-solid);
+    content: '\f071';
+    color: #ff8647;
+}
+
+.severity-45 .indicator::after {
+    /* STRICT_CSP */
+    font: var(--fa-font-solid);
+    content: '\f070';
+    color: #999999;
+}
+
+.severity-50 .indicator::after {
+    /* MEDIUM_MAYBE */
+    font: var(--fa-font-solid);
+    content: '\f071';
+    color: #FFD43B;
+}
+
+.severity-60 .indicator::after {
+    /* INFO */
+    font: var(--fa-font-solid);
+    content: '\f05a';
+    color: #0061ff;
+}
+
+.severity-100 .indicator::after {
+    /* NONE */
+    font: var(--fa-font-solid);
+    content: '\f058';
+    color: #00cb00;
+}
+
+.directive-list {
+    border: 1px solid #000000;
+}
+
+.directive-list .empty {
+    margin: 2em;
+}
+
+.directive {
+    margin: 0;
+    padding: 0;
+}
+
+.directive-name {
+    font-size: 12pt;
+    font-family: monospace;
+    border-bottom: 1px solid #888888;
+    padding-top: 0.25em;
+    padding-bottom: 0.25em;
+    background-color: #EEEEEE;
+}
+
+.directive-values {
+    margin-top: 0.5em;
+}
+
+.directive-values table {
+    border-collapse: separate; 
+    border-spacing: 0.5em;
+}
+
+.directive .directive-values {
+    display: none;
+}
+
+.directive.expanded .directive-values {
+    display: block;
+}
+
+
+.directive-toggle {
+    display: inline-block;
+    width: 1.5em;
+    margin-right: 0.5em;
+    cursor: pointer;
+    border: none;
+}
+
+.directive .directive-toggle::after {
+    font: var(--fa-font-solid);
+    content: '\f0da';
+}
+
+.directive.expanded .directive-toggle::after {
+    font: var(--fa-font-solid);
+    content: '\f0d7';
+}
+
+.segmented-control {
+    margin: 1em 0px;
+}
+
+.segmented-control button {
+    padding: 0.5em 0.75em;
+    margin: 0px;
+    font-weight: bold;
+    border-top: 1px solid #666666;
+    border-bottom: 1px solid #666666;
+    border-left: 1px solid #AAAAAA;
+    border-right: 1px solid #AAAAAA;
+
+}
+
+.segmented-control button.active {
+    background-color: #00AA00;
+    color: #ffffff;
+}
+
+.segmented-control button:first-child {
+    border-right: 0px;
+    border-top-left-radius: 8px;
+    border-bottom-left-radius: 8px;
+}
+
+.segmented-control button:last-child {
+    border-left: 0px;
+    border-top-right-radius: 8px;
+    border-bottom-right-radius: 8px;
+}
+
+
+.tab-content {
+}
+
+.tab-pane {
+    display: none;
+}
+
+.tab-pane.active {
+    display: block;
+}
+

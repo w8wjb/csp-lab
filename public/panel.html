@@ -5,6 +5,9 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>CSP Lab</title>
+  <link href="./css/fontawesome.css" rel="stylesheet" />
+  <link href="./css/brands.css" rel="stylesheet" />
+  <link href="./css/solid.css" rel="stylesheet" />
   <link rel="stylesheet" href="./panel.css" />
 </head>
 
@@ -12,6 +15,75 @@
   <div class="toolbar">
     <button id="viewRuleButton">View Current Rule List</button>
   </div>
+
+  <div class="segmented-control">
+    <button class="active" value="mode-existing">Existing</button><button value="mode-override">Override</button><button
+      value="mode-suggest">Suggest</button>
+  </div>
+
+  <div id="tabs-mode" class="tab-content">
+    <div class="tab-pane active" id="tab-existing">
+
+      <h3>Existing CSP Evaluation</h3>
+
+      <div id="existing-directive-list" class="directive-list">
+        <div class="directive">
+          <div class="directive-name severity-10">
+            <button class="directive-toggle"></button>
+            <i class="indicator"></i>
+            script-src
+          </div>
+          <div class="directive-values">
+            <table>
+              <tr class="directive-value severity-10">
+                <td><i class="indicator"></i></td>
+                <td><code>'self'</code></td>
+                <td class="comments">'self' can be problematic if you host JSONP, AngularJS or user uploaded files.</td>
+              </tr>
+            </table>
+          </div>
+        </div>
+      </div>
+
+      <h4>Legend</h4>
+      <ul class="severity-legend">
+        <li class="severity-10">
+          <i class="indicator"></i>
+          High severity finding
+        </li>
+        <li class="severity-30">
+          <i class="indicator"></i>
+          Medium severity finding
+        </li>
+        <li class="severity-40">
+          <i class="indicator"></i>
+          Possible high severity finding
+        </li>
+        <li class="severity-50">
+          <i class="indicator"></i>
+          Possible medium severity finding
+        </li>
+        <li class="severity-20">
+          <i class="indicator"></i>
+          Syntax error
+        </li>
+        <li class="severity-45">
+          <i class="indicator"></i>
+          Directive/value is ignored in this version of CSP
+        </li>
+        <li class="severity-60">
+          <i class="indicator"></i>
+          Information
+        </li>
+        <li class="severity-100">
+          <i class="indicator"></i>
+          No issues found
+        </li>
+      </ul>
+
+    </div>
+  </div>
+
 
   <div>
     <pre id="debug-output">
