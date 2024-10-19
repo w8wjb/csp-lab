@@ -42,6 +42,7 @@ async function captureResponseHeaders(details) {
 
       console.log(tabKey, 'Content-Security-Policy:', cspHeader.value);
       await chrome.storage.local.set({ [tabKey]: cspHeader.value });
+            
     } else {
       console.log(`Clearing CSP for ${details.tabId}`);
       cleanupTab(details.tabId);

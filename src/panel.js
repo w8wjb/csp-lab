@@ -2,9 +2,6 @@ import { CspEvaluator } from "csp_evaluator/dist/evaluator.js";
 import { CspParser } from "csp_evaluator/dist/parser.js";
 import { Severity } from "csp_evaluator/dist/finding";
 
-const viewRuleButton = document.getElementById('viewRuleButton');
-const debugOutputArea = document.getElementById('debug-output');
-
 async function loadExistingCSP() {
   if (chrome.tabs) {
 
@@ -31,14 +28,22 @@ upgrade-insecure-requests;
 worker-src 'self' blob:;`;
   }
 }
-async function displayExistingCSP() {
 
-  const existingCSP = await loadExistingCSP();
 
+function clearExistingCSP() {
   let directiveList = document.getElementById('existing-directive-list');
 
   // Clear list
   directiveList.replaceChildren();
+}
+
+async function displayExistingCSP() {
+
+  clearExistingCSP();
+
+  const existingCSP = await loadExistingCSP();
+
+  let directiveList = document.getElementById('existing-directive-list');
 
   if (existingCSP) {
     const csp = new CspParser(existingCSP).csp;
@@ -55,7 +60,7 @@ async function displayExistingCSP() {
 
       directiveClone
         .querySelector('.directive-toggle')
-        .addEventListener('click', toggleDirectivePanel);
+        .addEventListener('click', onToggleDirectivePanelClick);
 
       // Fill in the directive name
       directiveClone
@@ -108,23 +113,6 @@ async function displayExistingCSP() {
   }
 }
 
-function toggleDirectivePanel(event) {
-
-  let directiveContainer = event.target.closest('.directive');
-  directiveContainer.classList.toggle('expanded');
-
-}
-
-function toggleSegmented(event) {
-
-  let target = event.target;
-  let value = target.value;
-
-  let container = target.closest('.segmented-control');
-  updateSegmented(container, value)
-
-
-}
 
 function updateSegmented(control, selectedValue) {
   control.querySelectorAll('button').forEach(btn => btn.classList.remove('active'));
@@ -144,27 +132,8 @@ function displayMode(modeId) {
     tabDiv.classList.remove('active');
   });
 
-  switch (modeId) {
-    case 'mode-override':
-      tabContainer.querySelectorAll('#tab-override').forEach(elem => elem.classList.add('active'));
-      break;
-
-    case 'mode-suggest':
-      tabContainer.querySelectorAll('#tab-suggest').forEach(elem => elem.classList.add('active'));
-      break;
-
-    default:
-      tabContainer.querySelectorAll('#tab-existing').forEach(elem => elem.classList.add('active'));
-      break;
-  }
-
-}
-
-
-function onModeSelected(event) {
-
-  let modeId = event.detail.value;
-  displayMode(modeId);
+  let paneId = modeId.replace('mode-', '#tab-');
+  tabContainer.querySelector(paneId).classList.add('active');
 
 }
 
@@ -172,50 +141,81 @@ function loadDetailsForInspectedwindow() {
 
   const tabId = chrome.devtools.inspectedWindow.tabId;
 
-  console.log(`Reloading tab ${message.url}`)
-
   displayExistingCSP();
-
 
 }
 
+/** Handles page navigation messages */
 function onPageNavigated(message, sender, sendResponse) {
   if (message.tabId === chrome.devtools.inspectedWindow.tabId) {
 
-    if (message.action === 'page-navigation-complete') {
+    if (message.action === 'page-navigation-start') {
+      clearExistingCSP();
 
+    } else if (message.action === 'page-navigation-complete') {
+      loadDetailsForInspectedwindow();
 
-
-    } else if (message.action === 'page-navigation-start') {
-      // clearExistingCSP();
     }
   }
 }
 
+/****** Begin UI Event handlers *******/
 
+
+/**  Handles clicks to togggle directives open and closed */
+function onToggleDirectivePanelClick(event) {
+
+  let directiveContainer = event.target.closest('.directive');
+  directiveContainer.classList.toggle('expanded');
+
+}
+
+/** Handles clicks on the segments of the segmented control */
+function onToggleSegmentedClick(event) {
+
+  let target = event.target;
+  let value = target.value;
+
+  let container = target.closest('.segmented-control');
+  updateSegmented(container, value)
+
+}
+
+/** Handles change events emitted by the segmented control */
+function onModeSelected(event) {
+
+  let modeId = event.detail.value;
+  displayMode(modeId);
+
+}
+
+/** Handles when the page content finished loading */
 async function onContentLoaded() {
 
   document.querySelectorAll('.directive-toggle').forEach(element => {
-    element.addEventListener('click', toggleDirectivePanel);
+    element.addEventListener('click', onToggleDirectivePanelClick);
   });
 
 
   document.querySelectorAll('.segmented-control button').forEach(element => {
-    element.addEventListener('click', toggleSegmented);
+    element.addEventListener('click', onToggleSegmentedClick);
   });
 
   document.querySelectorAll('.segmented-control').forEach(element => {
     element.addEventListener('change', onModeSelected);
   });
 
-  chrome.runtime.onMessage.addListener(onPageNavigated);
+  if (chrome.runtime) {
+    chrome.runtime.onMessage.addListener(onPageNavigated);
+  }
   displayExistingCSP();
 
 
 }
 
+/****** End UI Event handlers *******/
+
 
 const DOM_CONTENT_LOADED = 'DOMContentLoaded'
-
 document.addEventListener(DOM_CONTENT_LOADED, onContentLoaded);
 
