@@ -1,0 +1,31 @@
+:host {
+    margin: 1em 0px;
+}
+
+:host button {
+    padding: 0.5em 0.75em;
+    margin: 0px;
+    font-weight: bold;
+    border-top: 1px solid #666666;
+    border-bottom: 1px solid #666666;
+    border-left: 1px solid #AAAAAA;
+    border-right: 1px solid #AAAAAA;
+
+}
+
+:host button.active {
+    background-color: #00AA00;
+    color: #ffffff;
+}
+
+:host button:first-of-type {
+    border-right: 0px;
+    border-top-left-radius: 8px;
+    border-bottom-left-radius: 8px;
+}
+
+:host button:last-of-type {
+    border-left: 0px;
+    border-top-right-radius: 8px;
+    border-bottom-right-radius: 8px;
+}

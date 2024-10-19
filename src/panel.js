@@ -1,6 +1,49 @@
 import { CspEvaluator } from "csp_evaluator/dist/evaluator.js";
 import { CspParser } from "csp_evaluator/dist/parser.js";
 import { Severity } from "csp_evaluator/dist/finding";
+import { SegmentedControl } from "./segmented";
+
+
+window.customElements.define('segmented-control', SegmentedControl);
+
+class OverrideMode {
+  static existing = new OverrideMode('mode-existing');
+  static override = new OverrideMode('mode-override');
+  static suggest = new OverrideMode('mode-suggest');
+
+  constructor(name) {
+    this.name = name;
+    this.tabPane = name.replace('mode-', 'tab-');
+  }
+  toString() {
+    return this.name;
+  }
+}
+
+/**
+ * 
+ * @returns Detects whether there is a CSP override in place
+ */
+async function detectOverrideMode() {
+
+  const rules = await chrome.declarativeNetRequest.getDynamicRules();
+  const tabId = chrome.devtools.inspectedWindow.tabId;
+  const tab = await chrome.tabs.get(tabId);
+
+  for (let rule of rules) {
+    const ruleRegex = new RegExp(rule.condition.regexFilter);
+    if (ruleRegex.test(tab.url)) {
+      const cspHeader = rule.action.responseHeaders[0].header;
+
+      if ("Content-Security-Policy-Report-Only" === cspHeader) {
+        return OverrideMode.suggest;
+      } else if ("Content-Security-Policy" === cspHeader) {
+        return OverrideMode.override;
+      }
+    }
+  }
+  return OverrideMode.existing;
+}
 
 async function loadExistingCSP() {
   if (chrome.tabs) {
@@ -113,34 +156,24 @@ async function displayExistingCSP() {
   }
 }
 
-
-function updateSegmented(control, selectedValue) {
-  control.querySelectorAll('button').forEach(btn => btn.classList.remove('active'));
-  control.querySelectorAll(`button[value="${selectedValue}"]`).forEach(btn => btn.classList.add('active'));
-
-  let changeEvent = new CustomEvent('change', {
-    detail: { value: selectedValue }
-  });
-  control.dispatchEvent(changeEvent);
-}
-
-
-function displayMode(modeId) {
+function displayMode(mode) {
   let tabContainer = document.getElementById('tabs-mode')
 
   tabContainer.querySelectorAll('.tab-pane').forEach(tabDiv => {
     tabDiv.classList.remove('active');
   });
 
-  let paneId = modeId.replace('mode-', '#tab-');
+  let paneId = '#' + mode.tabPane;
   tabContainer.querySelector(paneId).classList.add('active');
 
 }
 
-function loadDetailsForInspectedwindow() {
+async function loadDetailsForInspectedwindow() {
 
   const tabId = chrome.devtools.inspectedWindow.tabId;
 
+  let mode = await detectOverrideMode();
+  displayMode(mode);
   displayExistingCSP();
 
 }
@@ -170,23 +203,10 @@ function onToggleDirectivePanelClick(event) {
 
 }
 
-/** Handles clicks on the segments of the segmented control */
-function onToggleSegmentedClick(event) {
-
-  let target = event.target;
-  let value = target.value;
-
-  let container = target.closest('.segmented-control');
-  updateSegmented(container, value)
-
-}
-
 /** Handles change events emitted by the segmented control */
 function onModeSelected(event) {
-
-  let modeId = event.detail.value;
-  displayMode(modeId);
-
+  const mode = new OverrideMode(event.detail);
+  displayMode(mode);
 }
 
 /** Handles when the page content finished loading */
@@ -196,14 +216,7 @@ async function onContentLoaded() {
     element.addEventListener('click', onToggleDirectivePanelClick);
   });
 
-
-  document.querySelectorAll('.segmented-control button').forEach(element => {
-    element.addEventListener('click', onToggleSegmentedClick);
-  });
-
-  document.querySelectorAll('.segmented-control').forEach(element => {
-    element.addEventListener('change', onModeSelected);
-  });
+  document.querySelector('#mode-selector').addEventListener('change', onModeSelected);
 
   if (chrome.runtime) {
     chrome.runtime.onMessage.addListener(onPageNavigated);
@@ -214,7 +227,6 @@ async function onContentLoaded() {
 }
 
 /****** End UI Event handlers *******/
-
 
 const DOM_CONTENT_LOADED = 'DOMContentLoaded'
 document.addEventListener(DOM_CONTENT_LOADED, onContentLoaded);

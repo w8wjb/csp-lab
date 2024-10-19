@@ -9,6 +9,7 @@
   <link href="./css/brands.css" rel="stylesheet" />
   <link href="./css/solid.css" rel="stylesheet" />
   <link rel="stylesheet" href="./panel.css" />
+  <script src="./panel.js"></script>
 </head>
 
 <body>
@@ -16,10 +17,8 @@
     <button id="viewRuleButton">View Current Rule List</button>
   </div>
 
-  <div class="segmented-control">
-    <button class="active" value="mode-existing">Existing</button><button value="mode-override">Override</button><button
-      value="mode-suggest">Suggest</button>
-  </div>
+  <segmented-control id="mode-selector" segments="mode-existing:Existing,mode-override:Override,mode-suggest:Suggest"
+    value="mode-existing"></segmented-control>
 
   <div id="tabs-mode" class="tab-content">
     <div class="tab-pane active" id="tab-existing">
@@ -126,7 +125,6 @@
     </pre>
   </div>
 
-  <script src="./panel.js"></script>
 </body>
 
 </html>

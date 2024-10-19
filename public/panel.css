@@ -149,38 +149,9 @@ td.comments {
     content: '\f0d7';
 }
 
-.segmented-control {
-    margin: 1em 0px;
+segmented-control {
+    display: inline-block;
 }
-
-.segmented-control button {
-    padding: 0.5em 0.75em;
-    margin: 0px;
-    font-weight: bold;
-    border-top: 1px solid #666666;
-    border-bottom: 1px solid #666666;
-    border-left: 1px solid #AAAAAA;
-    border-right: 1px solid #AAAAAA;
-
-}
-
-.segmented-control button.active {
-    background-color: #00AA00;
-    color: #ffffff;
-}
-
-.segmented-control button:first-child {
-    border-right: 0px;
-    border-top-left-radius: 8px;
-    border-bottom-left-radius: 8px;
-}
-
-.segmented-control button:last-child {
-    border-left: 0px;
-    border-top-right-radius: 8px;
-    border-bottom-right-radius: 8px;
-}
-
 
 .tab-content {
 }
