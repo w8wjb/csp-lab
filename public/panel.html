@@ -45,6 +45,31 @@
         </div>
       </div>
 
+      <template id="directiveTemplate">
+        <div class="directive">
+          <div class="directive-name">
+            <button class="directive-toggle"></button>
+            <i class="indicator"></i>
+            <span class="directive-label"></span>
+          </div>
+          <div class="directive-values">
+            <table></table>
+          </div>
+        </div>
+      </template>
+
+      <template id="directiveValueTemplate">
+        <tr class="directive-value">
+          <td><i class="indicator"></i></td>
+          <td><code class="directive-code"></code></td>
+          <td class="comments"></td>
+        </tr>
+      </template>
+
+      <template id="emptyMessageTemplate">
+        <div class="empty">This page did not specify a Content Security Policy</div>
+      </template>
+
       <h4>Legend</h4>
       <ul class="severity-legend">
         <li class="severity-10">
