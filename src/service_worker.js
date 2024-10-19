@@ -1,3 +1,5 @@
+const cspSuggestServer = 'http://localhost:18282/csp-report';
+
 chrome.runtime.onInstalled.addListener(async function () {
   // restore the default rule if the extension is installed or updated
   console.log("Installing default rules")
@@ -11,9 +13,9 @@ chrome.runtime.onInstalled.addListener(async function () {
           type: 'modifyHeaders',
           responseHeaders: [
             {
-              header: 'Content-Security-Policy',
+              header: 'Content-Security-Policy-Report-Only',
               operation: 'set',
-              value: "default-src 'self'; img-src *; media-src media1.com media2.com; script-src userscripts.example.com"
+              value: `default-src 'none'; script-src 'self'; connect-src 'self'; img-src 'self'; style-src 'self';base-uri 'self';form-action 'self'; report-uri ${cspSuggestServer}`
             }
           ]
         },
@@ -37,9 +39,12 @@ async function captureResponseHeaders(details) {
     if (cspHeader) {
 
       let tabKey = `${details.tabId}-existing`;
-      
+
       console.log(tabKey, 'Content-Security-Policy:', cspHeader.value);
-      await chrome.storage.local.set({ [tabKey] : cspHeader.value });
+      await chrome.storage.local.set({ [tabKey]: cspHeader.value });
+    } else {
+      console.log(`Clearing CSP for ${details.tabId}`);
+      cleanupTab(details.tabId);
     }
   }
 }
@@ -50,18 +55,53 @@ async function cleanupTab(tabId) {
   await chrome.storage.local.remove([tabKey]);
 }
 
-// chrome.webNavigation.onCompleted.addListener((details) => {
-//   // Only process if it's the main frame (not iframes, etc.)
-//   if (details.frameId === 0) {
-//     console.log(`Navigated to ${details.url}`);
-//     // Send a message to the DevTools panel to update the content
-//     // chrome.runtime.sendMessage({
-//     //   action: 'page-navigated',
-//     //   tabId: details.tabId,
-//     //   url: details.url
-//     // });
-//   }
-// });
+function sendMessageToDevPanel(message) {
+  chrome.runtime.sendMessage(message)
+  .catch(e => {
+    // Errors can be ignored here. It's almost certainly because the DevTools panel isn't open
+  });
+}
+
+async function onNavigationStarting(details) {
+    // Only process if it's the main frame (not iframes, etc.)
+    if (details.frameId !== 0) {
+      return;
+    }
+
+    console.log("About to navigate; clearing CSP " + details.tabId);
+    await cleanupTab(details.tabId);
+
+    let message = {
+      action: 'page-navigation-start',
+      tabId: details.tabId,
+      url: details.url
+    };
+  
+    sendMessageToDevPanel(message);
+}
+
+
+function onNavigationCompleted(details) {
+  // Only process if it's the main frame (not iframes, etc.)
+  if (details.frameId !== 0) {
+    return;
+  }
+  // Send a message to the DevTools panel to update the content
+
+  let message = {
+    action: 'page-navigation-complete',
+    tabId: details.tabId,
+    url: details.url
+  };
+
+  sendMessageToDevPanel(message);
+}
+
+
+
+
+chrome.webNavigation.onBeforeNavigate.addListener(onNavigationStarting);
+chrome.webNavigation.onCompleted.addListener(onNavigationCompleted);
 
 chrome.webRequest.onHeadersReceived.addListener(captureResponseHeaders,
   { urls: ['http://*/*', 'https://*/*'], types: ['main_frame'] },

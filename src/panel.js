@@ -7,10 +7,9 @@ const debugOutputArea = document.getElementById('debug-output');
 
 async function loadExistingCSP() {
   if (chrome.tabs) {
-    const tabs = await chrome.tabs.query({ currentWindow: true, active: true });
-    const tab = tabs[0];
 
-    let tabKey = `${tab.id}-existing`;
+    const tabId = chrome.devtools.inspectedWindow.tabId
+    let tabKey = `${tabId}-existing`;
     const result = await chrome.storage.local.get(tabKey);
 
     if (result.hasOwnProperty(tabKey)) {
@@ -42,14 +41,20 @@ function createChild(tagName, className, parent) {
   return child;
 }
 
+async function clearExistingCSP() {
+  let directiveList = document.getElementById('existing-directive-list');
+
+  // Clear list
+  directiveList.replaceChildren();
+}
+
 async function displayExistingCSP() {
 
   const existingCSP = await loadExistingCSP();
 
   let directiveList = document.getElementById('existing-directive-list');
 
-  // Clear list
-  directiveList.replaceChildren();
+  clearExistingCSP();
 
   if (existingCSP) {
     const csp = new CspParser(existingCSP).csp;
@@ -64,7 +69,7 @@ async function displayExistingCSP() {
 
       let divDirective = createChild('div', 'directive', directiveList);
 
-      let divDirectiveName = createChild('div', 'directive-name', divDirective);      
+      let divDirectiveName = createChild('div', 'directive-name', divDirective);
       let directiveToggle = createChild('button', 'directive-toggle', divDirectiveName);
       directiveToggle.addEventListener('click', toggleDirectivePanel);
 
@@ -87,7 +92,7 @@ async function displayExistingCSP() {
         let cellValue = createChild('td', '', row);
         let codeWrapper = createChild('code', '', cellValue);
         codeWrapper.appendChild(document.createTextNode(directiveValue));
-        
+
         let cellComments = createChild('td', 'comments', row);
 
 
@@ -102,10 +107,10 @@ async function displayExistingCSP() {
       }
 
       divDirectiveName.classList.add('severity-' + overallSeverity);
-      
+
     }
 
-    
+
 
   } else {
 
@@ -182,10 +187,21 @@ function onModeSelected(event) {
 
 }
 
+function onPageNavigated(message, sender, sendResponse) {
+  if (message.tabId === chrome.devtools.inspectedWindow.tabId) {
+    
+    if (message.action === 'page-navigation-complete') {
+      console.log(`Reloading tab ${message.url}`)
+      displayExistingCSP();
+
+    } else if (message.action === 'page-navigation-start') {
+      // clearExistingCSP();
+    }
+  }
+}
+
 
 async function onContentLoaded() {
-  // refresh();
-
 
   document.querySelectorAll('.directive-toggle').forEach(element => {
     element.addEventListener('click', toggleDirectivePanel);
@@ -200,6 +216,7 @@ async function onContentLoaded() {
     element.addEventListener('change', onModeSelected);
   });
 
+  chrome.runtime.onMessage.addListener(onPageNavigated);
   displayExistingCSP();
 
 

@@ -1,0 +1,26 @@
+* {
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+}
+
+table {
+    border-collapse: collapse;
+}
+
+th, td {
+    border: 1px solid #000000;
+    padding: 0.5em 0.5em;
+}
+
+th {
+    text-align: left;
+}
+
+td button {
+    border: none;
+    background: none;
+    cursor: pointer;
+}
+
+button.remove {
+    color: #FF0000;
+}

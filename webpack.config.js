@@ -5,7 +5,8 @@ module.exports = {
   entry: {
     service_worker: './src/service_worker.js',
     devtools: './src/devtools.js',
-    panel: './src/panel.js'
+    panel: './src/panel.js',
+    options: '/src/options.js',
   },
   output: {
     path: path.resolve(__dirname, 'dist'),  // Output directory for bundled files
