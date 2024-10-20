@@ -9,6 +9,10 @@ body {
     margin: 1em;
 }
 
+h1, h2, h3, h4, h5 {
+    margin: 0.5em 0px;
+}
+
 .directive-values {
     font-size: 10pt;
     margin-left: 4em;
@@ -20,6 +24,16 @@ body {
 
 td.comments {
     padding-left: 1em;
+}
+
+button {
+    padding: 0.5em 0.75em;
+    margin: 0px;
+    font-weight: bold;
+    border: 1px solid #666666;
+    border-radius: 8px;
+    margin: 0 0.5em;
+    cursor: pointer;
 }
 
 .indicator {
@@ -154,6 +168,7 @@ segmented-control {
 }
 
 .tab-content {
+    position: relative;
 }
 
 .tab-pane {
@@ -164,3 +179,45 @@ segmented-control {
     display: block;
 }
 
+input[name=suggest_server] {
+    width: 100%;
+}
+
+.suggest-service-config {
+    display: flex;
+    align-items: center;
+    margin: 0.5em 0;
+}
+
+.suggest-service-config input {
+    flex-grow: 1;
+    margin-left: 1em;
+    font-family: 'Courier New', Courier, monospace;
+}
+
+textarea {
+    width: 98%;
+    height: 10em;
+    font-family: 'Courier New', Courier, monospace;
+    padding: 0.5em;
+    background-color: #EEEEEE;
+    border-radius: 4px;
+}
+
+#overlay-dialog {
+    display: none;
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background-color: rgba(255, 255, 255, 0.8); /* Semi-transparent black */
+    color: #000000;
+    justify-content: center;
+    align-items: center;
+    z-index: 10; /* Ensures the overlay is on top */
+}
+
+#overlay-dialog.active {
+    display: flex;
+}

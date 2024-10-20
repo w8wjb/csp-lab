@@ -1,35 +1,35 @@
-const cspSuggestServer = 'http://localhost:18282/csp-report';
+export const DEFAULT_CSP_REPORT_SERVICE = 'http://localhost:18282/csp-report';
 
-chrome.runtime.onInstalled.addListener(async function () {
-  // restore the default rule if the extension is installed or updated
-  console.log("Installing default rules")
-  const existingRules = await chrome.declarativeNetRequest.getDynamicRules();
-  chrome.declarativeNetRequest.updateDynamicRules({
-    removeRuleIds: existingRules.map((rule) => rule.id),
-    addRules: [
-      {
-        id: 2,
-        action: {
-          type: 'modifyHeaders',
-          responseHeaders: [
-            {
-              header: 'Content-Security-Policy-Report-Only',
-              operation: 'set',
-              value: `default-src 'none'; script-src 'self'; connect-src 'self'; img-src 'self'; style-src 'self';base-uri 'self';form-action 'self'; report-uri ${cspSuggestServer}`
-            }
-          ]
-        },
-        condition: {
-          regexFilter: '^https://www.w8wjb.com',
-          // urlFilter: '*',
-          resourceTypes: ['main_frame']
-        }
-      }
-    ]
-  });
+// chrome.runtime.onInstalled.addListener(async function () {
+//   // restore the default rule if the extension is installed or updated
+//   console.log("Installing default rules")
+//   const existingRules = await chrome.declarativeNetRequest.getDynamicRules();
+//   chrome.declarativeNetRequest.updateDynamicRules({
+//     removeRuleIds: existingRules.map((rule) => rule.id),
+//     addRules: [
+//       {
+//         id: 2,
+//         action: {
+//           type: 'modifyHeaders',
+//           responseHeaders: [
+//             {
+//               header: 'Content-Security-Policy-Report-Only',
+//               operation: 'set',
+//               value: `default-src 'none'; script-src 'self'; connect-src 'self'; img-src 'self'; style-src 'self';base-uri 'self';form-action 'self'; report-uri ${DEFAULT_CSP_REPORT_SERVICE}`
+//             }
+//           ]
+//         },
+//         condition: {
+//           regexFilter: '^https://www.w8wjb.com',
+//           // urlFilter: '*',
+//           resourceTypes: ['main_frame']
+//         }
+//       }
+//     ]
+//   });
 
 
-});
+// });
 
 async function captureResponseHeaders(details) {
   if (details.frameId === 0 && details.method === 'GET') { // We only care about the main frame
@@ -42,7 +42,7 @@ async function captureResponseHeaders(details) {
 
       console.log(tabKey, 'Content-Security-Policy:', cspHeader.value);
       await chrome.storage.local.set({ [tabKey]: cspHeader.value });
-            
+
     } else {
       console.log(`Clearing CSP for ${details.tabId}`);
       cleanupTab(details.tabId);

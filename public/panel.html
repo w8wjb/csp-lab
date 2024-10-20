@@ -13,14 +13,14 @@
 </head>
 
 <body>
-  <div class="toolbar">
-    <button id="viewRuleButton">View Current Rule List</button>
-  </div>
-
   <segmented-control id="mode-selector" segments="mode-existing:Existing,mode-override:Override,mode-suggest:Suggest"
     value="mode-existing"></segmented-control>
 
   <div id="tabs-mode" class="tab-content">
+    <div id="overlay-dialog">
+      <h2>Please reload page for changes to take effect</h2>
+    </div>
+
     <div class="tab-pane active" id="tab-existing">
 
       <h3>Existing CSP Evaluation</h3>
@@ -107,13 +107,26 @@
 
     </div>
     <div class="tab-pane" id="tab-override">
+      <h3>Custom CSP for this page</h3>
       <div>
-        Override
+        <textarea id="override-csp"></textarea>
+      </div>
+      <div>
+        <button>Update Custom CSP</button>
       </div>
     </div>
     <div class="tab-pane" id="tab-suggest">
+      <h3>Suggested CSP for this page</h3>
+      <div class="suggest-service-config">
+        CSP Reporting Endpoint:
+        <input type="text" id="suggest-service" name="suggest-service" />
+        <button>Update Service</button>
+      </div>
       <div>
-        Suggest
+        <textarea id="suggested-csp"></textarea>
+      </div>
+      <div>
+        <button id="btn-apply-suggested-csp">Copy to Override CSP</button>
       </div>
     </div>
   </div>

@@ -68,10 +68,15 @@ export class SegmentedControl extends HTMLElement {
 }
 
     selectSegment(value) {
+        const oldValue = this.currentValue;
         this.currentValue = value;
-        this.setAttribute('current-value', value); // Update the attribute
+        this.setAttribute('value', value);
         this.updateButtonStates();
-        this.dispatchEvent(new CustomEvent('change', { detail: value })); // Dispatch change event
+        const detail = {
+            value: this.currentValue,
+            oldValue: oldValue
+        }
+        this.dispatchEvent(new CustomEvent('change', { detail: detail })); // Dispatch change event
     }
 
     updateButtonStates() {

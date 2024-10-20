@@ -3,21 +3,43 @@ import { CspParser } from "csp_evaluator/dist/parser.js";
 import { Severity } from "csp_evaluator/dist/finding";
 import { SegmentedControl } from "./segmented";
 
-
 window.customElements.define('segmented-control', SegmentedControl);
 
-class OverrideMode {
-  static existing = new OverrideMode('mode-existing');
-  static override = new OverrideMode('mode-override');
-  static suggest = new OverrideMode('mode-suggest');
+export const DEFAULT_CSP_REPORT_SERVICE = 'http://localhost:18282/csp-report';
+const DEFAULT_STARTER_CSP = "default-src 'none'; script-src 'self'; connect-src 'self'; img-src 'self'; style-src 'self';base-uri 'self';form-action 'self'";
 
-  constructor(name) {
-    this.name = name;
-    this.tabPane = name.replace('mode-', 'tab-');
+class OverrideMode {
+  static EXISTING = 'mode-existing';
+  static OVERRIDE = 'mode-override';
+  static SUGGEST = 'mode-suggest';
+
+}
+
+async function getNextRuleId() {
+  const rules = await chrome.declarativeNetRequest.getDynamicRules();
+  return Math.max(0, ...rules.map((rule) => rule.id)) + 1;
+}
+
+async function getCurrentTabURL() {
+  if (chrome.devtools) {
+    const tabId = chrome.devtools.inspectedWindow.tabId;
+    const tab = await chrome.tabs.get(tabId);
+    return tab.url;
   }
-  toString() {
-    return this.name;
+  return document.url;
+}
+
+async function getActiveRule(url) {
+  if (chrome.declarativeNetRequest) {
+    const rules = await chrome.declarativeNetRequest.getDynamicRules();
+    for (let rule of rules) {
+      const ruleRegex = new RegExp(rule.condition.regexFilter);
+      if (ruleRegex.test(url)) {
+        return rule;
+      }
+    }
   }
+  return null;
 }
 
 /**
@@ -25,24 +47,29 @@ class OverrideMode {
  * @returns Detects whether there is a CSP override in place
  */
 async function detectOverrideMode() {
+  const url = await getCurrentTabURL();
+  const rule = await getActiveRule(url);
 
-  const rules = await chrome.declarativeNetRequest.getDynamicRules();
-  const tabId = chrome.devtools.inspectedWindow.tabId;
-  const tab = await chrome.tabs.get(tabId);
-
-  for (let rule of rules) {
-    const ruleRegex = new RegExp(rule.condition.regexFilter);
-    if (ruleRegex.test(tab.url)) {
-      const cspHeader = rule.action.responseHeaders[0].header;
-
-      if ("Content-Security-Policy-Report-Only" === cspHeader) {
-        return OverrideMode.suggest;
-      } else if ("Content-Security-Policy" === cspHeader) {
-        return OverrideMode.override;
-      }
+  if (rule) {
+    const cspHeader = rule.action.responseHeaders[0].header;
+    if ("Content-Security-Policy-Report-Only" === cspHeader) {
+      return OverrideMode.SUGGEST;
+    } else if ("Content-Security-Policy" === cspHeader) {
+      return OverrideMode.OVERRIDE;
     }
   }
-  return OverrideMode.existing;
+
+  return OverrideMode.EXISTING;
+}
+
+function displayDialog(message) {
+  const dialog = document.getElementById('overlay-dialog');
+  dialog.querySelectorAll('h2').forEach(elem => { elem.textContent = message })
+  dialog.classList.add('active');
+}
+
+function hideDialog() {
+  document.getElementById('overlay-dialog').classList.remove('active');
 }
 
 async function loadExistingCSP() {
@@ -156,25 +183,192 @@ async function displayExistingCSP() {
   }
 }
 
-function displayMode(mode) {
-  let tabContainer = document.getElementById('tabs-mode')
+async function displaySuggestedCSP() {
 
+  const tabURL = await getCurrentTabURL();
+  const rule = await getActiveRule(tabURL);
+
+  if (rule) {
+
+    const cspHeader = rule.action.responseHeaders[0].value;
+    const csp = new CspParser(cspHeader).csp;
+
+    const reportURI = csp.directives['report-uri'][0]
+
+    document.getElementById('suggest-service').value = reportURI;
+
+    const suggestURL = new URL(reportURI);
+    const suggestHost = new URL(tabURL).host;
+
+    suggestURL.pathname = `/suggest/${suggestHost}`;
+
+    const response = await fetch(suggestURL);
+    if (response.ok) {
+      let cspText = await response.text();
+      cspText = cspText.replaceAll('; ', ";\n");
+      document.getElementById('suggested-csp').value = cspText;
+    }
+
+  }
+
+}
+
+async function displayOverrideCSP() {
+
+  const tabURL = await getCurrentTabURL();
+  const rule = await getActiveRule(tabURL);
+
+  if (rule) {
+    let cspText = rule.action.responseHeaders[0].value;
+    cspText = cspText.replaceAll('; ', ";\n");
+    document.getElementById('override-csp').value = cspText;
+  }
+
+}
+
+async function installReportingRule() {
+  const tabURL = await getCurrentTabURL();
+
+  let reportingCSP = await loadExistingCSP();
+
+  if (reportingCSP) {
+    const parsed = new CspParser(reportingCSP).csp;
+    parsed['report-uri'] = [DEFAULT_CSP_REPORT_SERVICE];
+    reportingCSP = parsed.convertToString();
+
+  } else {
+    reportingCSP = `default-src 'none'; script-src 'self'; connect-src 'self'; img-src 'self'; style-src 'self';base-uri 'self';form-action 'self'; report-uri ${DEFAULT_CSP_REPORT_SERVICE}`;
+  }
+
+  const newRuleID = await getNextRuleId();
+
+  const url = new URL(tabURL);
+
+  const regexFilter = `^${url.protocol}//${url.host}`
+
+  let ruleChanges = {
+    addRules: [
+      {
+        id: newRuleID,
+        action: {
+          type: 'modifyHeaders',
+          responseHeaders: [
+            {
+              header: 'Content-Security-Policy-Report-Only',
+              operation: 'set',
+              value: reportingCSP
+            }
+          ]
+        },
+        condition: {
+          regexFilter: regexFilter,
+          resourceTypes: ['main_frame']
+        }
+      }
+    ]
+  }
+
+  const rule = await getActiveRule(tabURL);
+  if (rule) {
+    ruleChanges['removeRuleIds'] = [rule.id];
+  }
+
+  await chrome.declarativeNetRequest.updateDynamicRules(ruleChanges);
+
+}
+
+async function installOverrideRule(newCSP) {
+
+  const tabURL = await getCurrentTabURL();
+
+  let overrideCSP = await loadExistingCSP();
+  
+  if (newCSP) {
+    overrideCSP = newCSP;
+  } else if (!overrideCSP) {
+    overrideCSP = DEFAULT_STARTER_CSP;
+  }
+
+  const newRuleID = await getNextRuleId();
+
+  const url = new URL(tabURL);
+  const regexFilter = `^${url.protocol}//${url.host}`
+
+  let ruleChanges = {
+    addRules: [
+      {
+        id: newRuleID,
+        action: {
+          type: 'modifyHeaders',
+          responseHeaders: [
+            {
+              header: 'Content-Security-Policy',
+              operation: 'set',
+              value: overrideCSP
+            }
+          ]
+        },
+        condition: {
+          regexFilter: regexFilter,
+          resourceTypes: ['main_frame']
+        }
+      }
+    ]
+  }
+
+  const rule = await getActiveRule(tabURL);
+  if (rule) {
+    ruleChanges['removeRuleIds'] = [rule.id];
+  }
+
+  await chrome.declarativeNetRequest.updateDynamicRules(ruleChanges);
+
+
+}
+
+async function clearOverrideRule() {
+  const tabURL = await getCurrentTabURL();
+  const rule = await getActiveRule(tabURL);
+
+  if (rule) {
+    await chrome.declarativeNetRequest.updateDynamicRules({
+      removeRuleIds: [rule.id]
+    });
+  }
+
+}
+
+function displayMode(mode) {
+
+  const modeSelector = document.getElementById('mode-selector');
+  modeSelector.setAttribute('value', mode);
+
+  let tabContainer = document.getElementById('tabs-mode')
   tabContainer.querySelectorAll('.tab-pane').forEach(tabDiv => {
     tabDiv.classList.remove('active');
   });
 
-  let paneId = '#' + mode.tabPane;
+  let paneId = '#' + mode.replace('mode-', 'tab-');
   tabContainer.querySelector(paneId).classList.add('active');
 
 }
 
 async function loadDetailsForInspectedwindow() {
 
-  const tabId = chrome.devtools.inspectedWindow.tabId;
-
   let mode = await detectOverrideMode();
+  hideDialog();
   displayMode(mode);
-  displayExistingCSP();
+
+  switch (mode) {
+    case OverrideMode.OVERRIDE:
+      displayOverrideCSP();
+
+    case OverrideMode.SUGGEST:
+      displaySuggestedCSP();
+
+    default:
+      displayExistingCSP();
+  }
 
 }
 
@@ -205,24 +399,72 @@ function onToggleDirectivePanelClick(event) {
 
 /** Handles change events emitted by the segmented control */
 function onModeSelected(event) {
-  const mode = new OverrideMode(event.detail);
-  displayMode(mode);
+  const newMode = event.detail.value;
+  const oldMode = event.detail.oldValue;
+
+
+  switch (oldMode) {
+    case OverrideMode.OVERRIDE:
+      clearOverrideRule();
+      break;
+
+    case OverrideMode.SUGGEST:
+      clearOverrideRule();
+      break;
+
+    default:
+      break;
+  }
+
+  switch (newMode) {
+    case OverrideMode.OVERRIDE:
+      installOverrideRule(null);
+      displayDialog("Please reload page for changes to take effect");
+      break;
+
+    case OverrideMode.SUGGEST:
+      installReportingRule();
+      displayDialog("Please reload page for changes to take effect");
+      break;
+
+    default:
+      hideDialog();
+      break;
+  }
+
+
+  displayMode(newMode);
+
+}
+
+async function onClickApplySuggestedCSP(event) {
+  
+  let suggestedCSP = document.getElementById('suggested-csp').value;
+  if (suggestedCSP) {
+    suggestedCSP = suggestedCSP.replaceAll("\n", " ");
+    await installOverrideRule(suggestedCSP);
+  }
+
+  loadDetailsForInspectedwindow();
+  displayDialog("Please reload page for changes to take effect");
 }
 
 /** Handles when the page content finished loading */
 async function onContentLoaded() {
+  console.log('HERE');
 
   document.querySelectorAll('.directive-toggle').forEach(element => {
     element.addEventListener('click', onToggleDirectivePanelClick);
   });
 
-  document.querySelector('#mode-selector').addEventListener('change', onModeSelected);
+  document.getElementById('mode-selector').addEventListener('change', onModeSelected);
+  document.getElementById('btn-apply-suggested-csp').addEventListener('click', onClickApplySuggestedCSP);
 
   if (chrome.runtime) {
     chrome.runtime.onMessage.addListener(onPageNavigated);
   }
-  displayExistingCSP();
 
+  loadDetailsForInspectedwindow();
 
 }
 
