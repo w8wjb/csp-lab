@@ -7,6 +7,7 @@ module.exports = {
     devtools: './src/devtools.js',
     panel: './src/panel.js',
     options: '/src/options.js',
+    segmented: './src/segmented.js',
   },
   output: {
     path: path.resolve(__dirname, 'dist'),  // Output directory for bundled files

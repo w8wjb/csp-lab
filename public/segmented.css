@@ -10,7 +10,7 @@
     border-bottom: 1px solid #666666;
     border-left: 1px solid #AAAAAA;
     border-right: 1px solid #AAAAAA;
-
+    cursor: pointer;
 }
 
 :host button.active {

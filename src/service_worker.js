@@ -1,35 +1,11 @@
-export const DEFAULT_CSP_REPORT_SERVICE = 'http://localhost:18282/csp-report';
+import { Config } from "./config";
 
-// chrome.runtime.onInstalled.addListener(async function () {
-//   // restore the default rule if the extension is installed or updated
-//   console.log("Installing default rules")
-//   const existingRules = await chrome.declarativeNetRequest.getDynamicRules();
-//   chrome.declarativeNetRequest.updateDynamicRules({
-//     removeRuleIds: existingRules.map((rule) => rule.id),
-//     addRules: [
-//       {
-//         id: 2,
-//         action: {
-//           type: 'modifyHeaders',
-//           responseHeaders: [
-//             {
-//               header: 'Content-Security-Policy-Report-Only',
-//               operation: 'set',
-//               value: `default-src 'none'; script-src 'self'; connect-src 'self'; img-src 'self'; style-src 'self';base-uri 'self';form-action 'self'; report-uri ${DEFAULT_CSP_REPORT_SERVICE}`
-//             }
-//           ]
-//         },
-//         condition: {
-//           regexFilter: '^https://www.w8wjb.com',
-//           // urlFilter: '*',
-//           resourceTypes: ['main_frame']
-//         }
-//       }
-//     ]
-//   });
+chrome.runtime.onInstalled.addListener(async function () {
+
+  Config.initDefaults();
 
 
-// });
+});
 
 async function captureResponseHeaders(details) {
   if (details.frameId === 0 && details.method === 'GET') { // We only care about the main frame
@@ -58,27 +34,27 @@ async function cleanupTab(tabId) {
 
 function sendMessageToDevPanel(message) {
   chrome.runtime.sendMessage(message)
-  .catch(e => {
-    // Errors can be ignored here. It's almost certainly because the DevTools panel isn't open
-  });
+    .catch(e => {
+      // Errors can be ignored here. It's almost certainly because the DevTools panel isn't open
+    });
 }
 
 async function onNavigationStarting(details) {
-    // Only process if it's the main frame (not iframes, etc.)
-    if (details.frameId !== 0) {
-      return;
-    }
+  // Only process if it's the main frame (not iframes, etc.)
+  if (details.frameId !== 0) {
+    return;
+  }
 
-    console.log("About to navigate; clearing CSP " + details.tabId);
-    await cleanupTab(details.tabId);
+  console.log("About to navigate; clearing CSP " + details.tabId);
+  await cleanupTab(details.tabId);
 
-    let message = {
-      action: 'page-navigation-start',
-      tabId: details.tabId,
-      url: details.url
-    };
-  
-    sendMessageToDevPanel(message);
+  let message = {
+    action: 'page-navigation-start',
+    tabId: details.tabId,
+    url: details.url
+  };
+
+  sendMessageToDevPanel(message);
 }
 
 

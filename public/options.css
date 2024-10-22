@@ -24,3 +24,8 @@ td button {
 button.remove {
     color: #FF0000;
 }
+
+#suggest-service {
+    font-family: 'Courier New', Courier, monospace;
+    width: 30em;
+}

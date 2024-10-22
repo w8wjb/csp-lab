@@ -9,101 +9,25 @@
   <link href="./css/brands.css" rel="stylesheet" />
   <link href="./css/solid.css" rel="stylesheet" />
   <link rel="stylesheet" href="./panel.css" />
+  <script src="./segmented.js"></script>
   <script src="./panel.js"></script>
 </head>
 
 <body>
-  <segmented-control id="mode-selector" segments="mode-existing:Existing,mode-override:Override,mode-suggest:Suggest"
+  <segmented-control id="mode-selector" segments="mode-existing:Existing,mode-suggest:Suggest,mode-override:Override"
     value="mode-existing"></segmented-control>
 
+  <div id="message-box">
+    <h2>Please reload page for changes to take effect</h2>
+  </div>
+
   <div id="tabs-mode" class="tab-content">
-    <div id="overlay-dialog">
-      <h2>Please reload page for changes to take effect</h2>
-    </div>
 
     <div class="tab-pane active" id="tab-existing">
 
       <h3>Existing CSP Evaluation</h3>
 
-      <div id="existing-directive-list" class="directive-list">
-        <div class="directive">
-          <div class="directive-name severity-10">
-            <button class="directive-toggle"></button>
-            <i class="indicator"></i>
-            script-src
-          </div>
-          <div class="directive-values">
-            <table>
-              <tr class="directive-value severity-10">
-                <td><i class="indicator"></i></td>
-                <td><code>'self'</code></td>
-                <td class="comments">'self' can be problematic if you host JSONP, AngularJS or user uploaded files.</td>
-              </tr>
-            </table>
-          </div>
-        </div>
-      </div>
 
-      <template id="directiveTemplate">
-        <div class="directive">
-          <div class="directive-name">
-            <button class="directive-toggle"></button>
-            <i class="indicator"></i>
-            <span class="directive-label"></span>
-          </div>
-          <div class="directive-values">
-            <table></table>
-          </div>
-        </div>
-      </template>
-
-      <template id="directiveValueTemplate">
-        <tr class="directive-value">
-          <td><i class="indicator"></i></td>
-          <td><code class="directive-code"></code></td>
-          <td class="comments"></td>
-        </tr>
-      </template>
-
-      <template id="emptyMessageTemplate">
-        <div class="empty">This page did not specify a Content Security Policy</div>
-      </template>
-
-      <h4>Legend</h4>
-      <ul class="severity-legend">
-        <li class="severity-10">
-          <i class="indicator"></i>
-          High severity finding
-        </li>
-        <li class="severity-30">
-          <i class="indicator"></i>
-          Medium severity finding
-        </li>
-        <li class="severity-40">
-          <i class="indicator"></i>
-          Possible high severity finding
-        </li>
-        <li class="severity-50">
-          <i class="indicator"></i>
-          Possible medium severity finding
-        </li>
-        <li class="severity-20">
-          <i class="indicator"></i>
-          Syntax error
-        </li>
-        <li class="severity-45">
-          <i class="indicator"></i>
-          Directive/value is ignored in this version of CSP
-        </li>
-        <li class="severity-60">
-          <i class="indicator"></i>
-          Information
-        </li>
-        <li class="severity-100">
-          <i class="indicator"></i>
-          No issues found
-        </li>
-      </ul>
 
     </div>
     <div class="tab-pane" id="tab-override">
@@ -112,26 +36,100 @@
         <textarea id="override-csp"></textarea>
       </div>
       <div>
-        <button>Update Custom CSP</button>
+        <button id="btn-udpate-custom-csp">Update Custom CSP</button>
       </div>
     </div>
     <div class="tab-pane" id="tab-suggest">
       <h3>Suggested CSP for this page</h3>
-      <div class="suggest-service-config">
-        CSP Reporting Endpoint:
-        <input type="text" id="suggest-service" name="suggest-service" />
-        <button>Update Service</button>
-      </div>
       <div>
         <textarea id="suggested-csp"></textarea>
       </div>
-      <div>
+      <div class="suggested-csp-actions">
         <button id="btn-apply-suggested-csp">Copy to Override CSP</button>
+        <button id="btn-reset-suggested-csp">Reset Suggested CSP</button>
       </div>
     </div>
   </div>
 
+  <div id="csp-evaluation" class="directive-list">
+    <div class="directive">
+      <div class="directive-name severity-10">
+        <button class="directive-toggle"></button>
+        <i class="indicator"></i>
+        script-src
+      </div>
+      <div class="directive-values">
+        <table>
+          <tr class="directive-value severity-10">
+            <td><i class="indicator"></i></td>
+            <td><code>'self'</code></td>
+            <td class="comments">'self' can be problematic if you host JSONP, AngularJS or user uploaded files.</td>
+          </tr>
+        </table>
+      </div>
+    </div>
+  </div>
 
+  <template id="directiveTemplate">
+    <div class="directive">
+      <div class="directive-name">
+        <button class="directive-toggle"></button>
+        <i class="indicator"></i>
+        <span class="directive-label"></span>
+      </div>
+      <div class="directive-values">
+        <table></table>
+      </div>
+    </div>
+  </template>
+
+  <template id="directiveValueTemplate">
+    <tr class="directive-value">
+      <td><i class="indicator"></i></td>
+      <td><code class="directive-code"></code></td>
+      <td class="comments"></td>
+    </tr>
+  </template>
+
+  <template id="emptyMessageTemplate">
+    <div class="empty">This page did not specify a Content Security Policy</div>
+  </template>
+
+  <h4>Legend</h4>
+  <ul class="severity-legend">
+    <li class="severity-10">
+      <i class="indicator"></i>
+      High severity finding
+    </li>
+    <li class="severity-30">
+      <i class="indicator"></i>
+      Medium severity finding
+    </li>
+    <li class="severity-40">
+      <i class="indicator"></i>
+      Possible high severity finding
+    </li>
+    <li class="severity-50">
+      <i class="indicator"></i>
+      Possible medium severity finding
+    </li>
+    <li class="severity-20">
+      <i class="indicator"></i>
+      Syntax error
+    </li>
+    <li class="severity-45">
+      <i class="indicator"></i>
+      Directive/value is ignored in this version of CSP
+    </li>
+    <li class="severity-60">
+      <i class="indicator"></i>
+      Information
+    </li>
+    <li class="severity-100">
+      <i class="indicator"></i>
+      No issues found
+    </li>
+  </ul>
   <div>
     <pre id="debug-output">
 

@@ -68,6 +68,9 @@ export class SegmentedControl extends HTMLElement {
 }
 
     selectSegment(value) {
+        if (this.currentValue === value) {
+            return;
+        }
         const oldValue = this.currentValue;
         this.currentValue = value;
         this.setAttribute('value', value);
@@ -90,3 +93,5 @@ export class SegmentedControl extends HTMLElement {
         return this.currentValue;
     }
 }
+
+window.customElements.define('segmented-control', SegmentedControl);

@@ -1,7 +1,15 @@
+import { Config } from "./config";
 
 async function refresh() {
-    const rules = await chrome.declarativeNetRequest.getDynamicRules();
-    renderRules(rules);
+    if (chrome.declarativeNetRequest) {
+        const rules = await chrome.declarativeNetRequest.getDynamicRules();
+        renderRules(rules);
+    }
+
+    if (chrome.storage) {
+        document.getElementById('suggest-service').value = await Config.getReportService();
+    }
+
 }
 
 function createChild(tagName, className, parent) {
@@ -19,7 +27,7 @@ function renderRules(rules) {
 
     ruleList.replaceChildren();
     for (const rule of rules) {
-        
+
         let row = createChild('tr', '', ruleList);
 
         let cellWebsite = createChild('td', '', row);
@@ -35,7 +43,7 @@ function renderRules(rules) {
         let cellActions = createChild('td', '', row);
         let btnRemove = createChild('button', 'remove', cellActions);
         createChild('i', 'fa-solid fa-trash-can', btnRemove);
-        btnRemove.addEventListener('click', function() {
+        btnRemove.addEventListener('click', function () {
             removeRule(rule.id);
         })
 
