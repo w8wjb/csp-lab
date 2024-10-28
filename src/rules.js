@@ -1,4 +1,3 @@
-import { CspParser } from "csp_evaluator/dist/parser.js";
 import { Config } from "./config";
 
 export class OverrideMode {
@@ -10,11 +9,19 @@ export class OverrideMode {
 
 export class Rules {
 
+    /**
+     * Gets the next available rule ID
+     * @returns ID number
+     */
     static async getNextRuleId() {
         const rules = await chrome.declarativeNetRequest.getDynamicRules();
         return Math.max(0, ...rules.map((rule) => rule.id)) + 1;
     }
 
+    /**
+     * Gets the URL that is displayed in the active tab
+     * @returns url string
+     */
     static async getCurrentTabURL() {
         if (chrome.devtools) {
             const tabId = chrome.devtools.inspectedWindow.tabId;
@@ -24,6 +31,11 @@ export class Rules {
         return document.url;
     }
 
+    /**
+     * Gets the override rule for the given URL, if one exists
+     * @param string url 
+     * @returns 
+     */
     static async getActiveRule(url) {
         if (chrome.declarativeNetRequest) {
             if (!url) {
@@ -45,10 +57,7 @@ export class Rules {
      * 
      * @returns Detects whether there is a CSP override in place
      */
-    static async detectOverrideMode() {
-        const url = await Rules.getCurrentTabURL();
-        const rule = await Rules.getActiveRule(url);
-
+    static async detectOverrideMode(rule) {
         if (rule) {
             const cspHeader = rule.action.responseHeaders[0].header;
             if ("Content-Security-Policy-Report-Only" === cspHeader) {
@@ -61,10 +70,13 @@ export class Rules {
         return OverrideMode.EXISTING;
     }
 
+    /**
+     * Installs a rule that will override any existing CSP and replace it with a 'Content-Security-Policy-Report-Only' header
+     */
     static async installReportingRule() {
 
-        const reportService = await Config.getReportService();
-        const reportingCSP = `default-src 'none'; script-src 'self'; connect-src 'self'; img-src 'self'; style-src 'self'; base-uri 'self'; form-action 'self'; report-uri ${reportService}`;
+        const suggestService = await Config.getSuggestService();
+        const reportingCSP = `default-src 'none'; script-src 'self'; connect-src 'self'; img-src 'self'; style-src 'self'; base-uri 'self'; form-action 'self'; report-uri ${suggestService}`;
         
         const tabURL = await Rules.getCurrentTabURL();
         const url = new URL(tabURL);
@@ -107,6 +119,10 @@ export class Rules {
 
     }
 
+    /**
+     * Installs a rule that will override any existing CSP with the specified CSP
+     * @param string newCSP 
+     */
     static async installOverrideRule(newCSP) {
 
         const tabURL = await Rules.getCurrentTabURL();
@@ -153,7 +169,9 @@ export class Rules {
 
 
 
-
+    /**
+     * Remove any existing rule that performs an CSP override on the current tab's URL
+     */
     static async clearOverrideRule() {
         const tabURL = await Rules.getCurrentTabURL();
         const rule = await Rules.getActiveRule(tabURL);
@@ -166,6 +184,9 @@ export class Rules {
 
     }
 
+    /**
+     * @returns string existing CSP, or an empty string if none
+     */
     static async loadExistingCSP() {
         if (chrome.tabs) {
       
@@ -176,21 +197,8 @@ export class Rules {
           if (result.hasOwnProperty(tabKey)) {
             return result[tabKey];
           }
-          return '';
-      
-        } else {
-          return `default-src https: wss://*.hotjar.com https://*.paradox.ai;
-      connect-src 'self' blob: data: *.google.com https://*.googleapis.com https://*.gstatic.com https://bam.nr-data.net https://www.google-analytics.com stats.g.doubleclick.net https://global.ketchcdn.com https://googleads.g.doubleclick.net https://*.paradox.ai;
-      font-src 'unsafe-inline' data: https: https://fonts.gstatic.com;
-      frame-ancestors 'self' gfs.phenompeople.com cdn-bot.phenompeople.com;
-      frame-src 'self' *.google.com https://*.gordonnow.gfs.com gfs.phenompeople.com cdn-bot.phenompeople.com youtube.com www.youtube.com https://*.cookiebot.com https://td.doubleclick.net;
-      img-src 'self' 'unsafe-inline' data: https: *.google.com https://*.googleapis.com *.googleusercontent.com https://*.gstatic.com;
-      object-src 'none';
-      script-src 'self' 'unsafe-eval' 'unsafe-inline' blob: https: https://*.ggpht.com *.google.com https://*.googleapis.com *.googleusercontent.com https://*.gstatic.com gfs.phenompeople.com cdn-bot.phenompeople.com https://*.gordonnow.gfs.com;
-      style-src 'self' 'unsafe-inline' https: https://fonts.googleapis.com;
-      upgrade-insecure-requests;
-      worker-src 'self' blob:;`;
         }
+        return '';
       }
       
 

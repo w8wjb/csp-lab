@@ -5,18 +5,41 @@ import { OverrideMode, Rules } from "./rules";
 import { Config } from "./config";
 
 
+/**
+ * Display a dialog box to the user
+ * @param string message message to display
+ * @param string type type of dialog ('warning' or 'error')
+ */
 function displayDialog(message, type = 'warning') {
   const dialog = document.getElementById('message-box');
   dialog.className = `${type} active`;
-  dialog.querySelectorAll('h2').forEach(elem => { elem.textContent = message })
+  dialog.querySelectorAll('h2').forEach(elem => { elem.innerHTML = message })
 }
 
+/**
+ * Display a dialog advising the user to reload the page. Includes a link to trigger the reload right from the box
+ */
+function displayReloadDialog() {
+  displayDialog('Please <a href="#">reload page</a> for changes to take effect');
+
+  let reloadFunc = () => {
+    chrome.tabs.reload();
+  }
+
+  document.querySelectorAll('#message-box a').forEach(a => a.addEventListener('click', reloadFunc));
+}
+
+/**
+ * Hide the dialog box
+ */
 function hideDialog() {
   document.getElementById('message-box').classList.remove('active');
 }
 
 
-
+/**
+ * Clear out the box with the analysis of the current CSP
+ */
 function clearCspAnalysis() {
   let directiveList = document.getElementById('csp-evaluation');
 
@@ -25,6 +48,10 @@ function clearCspAnalysis() {
 }
 
 
+/**
+ * Perform an analysis of the given string and display it in the appropriate box on screen
+ * @param string cspString CSP to analyze
+ */
 async function displayCspAnalysis(cspString) {
 
   clearCspAnalysis();
@@ -99,6 +126,9 @@ async function displayCspAnalysis(cspString) {
   }
 }
 
+/**
+ * Fetch and display the CSP that was sent by the remote server
+ */
 async function displayExistingCSP() {
 
   const existingCSP = await Rules.loadExistingCSP();
@@ -106,10 +136,18 @@ async function displayExistingCSP() {
 
 }
 
+/**
+ * Formats the CSP to better display in a textarea by adding newlines after each directive type
+ * @param string cspText 
+ * @returns 
+ */
 function formatCSP(cspText) {
   return cspText.replaceAll('; ', ";\n");
 }
 
+/**
+ * Fetch the suggested CSP from the service and display it in the box
+ */
 async function displaySuggestedCSP() {
 
   const tabURL = await Rules.getCurrentTabURL();
@@ -120,7 +158,7 @@ async function displaySuggestedCSP() {
     const cspHeader = rule.action.responseHeaders[0].value;
     const csp = new CspParser(cspHeader).csp;
 
-    let reportURI = await Config.getReportService();
+    let reportURI = await Config.getSuggestService();
     if ('report-uri' in csp.directives) {
       reportURI = csp.directives['report-uri'][0]
     }
@@ -160,6 +198,9 @@ async function displaySuggestedCSP() {
 
 }
 
+/**
+ * Ask the the CSP Suggest service to forget what it has captured for the current domain.
+ */
 async function resetSuggestedCSP() {
 
   clearCspAnalysis();
@@ -174,7 +215,7 @@ async function resetSuggestedCSP() {
     const cspHeader = rule.action.responseHeaders[0].value;
     const csp = new CspParser(cspHeader).csp;
 
-    let reportURI = await Config.getReportService();
+    let reportURI = await Config.getSuggestService();
     if ('report-uri' in csp.directives) {
       reportURI = csp.directives['report-uri'][0]
     }
@@ -188,7 +229,7 @@ async function resetSuggestedCSP() {
         }
       });
       suggestedCSP.value = ''
-      displayDialog("Please reload page for changes to take effect");
+      displayReloadDialog();
 
     } catch {
       displayDialog(`CSP Suggestion service unavailable: ${reportURI}`, 'error');
@@ -198,7 +239,9 @@ async function resetSuggestedCSP() {
 
 }
 
-
+/**
+ * Fetch the CSP that this extension has installed as an override for the current domain
+ */
 async function displayOverrideCSP() {
 
   const tabURL = await Rules.getCurrentTabURL();
@@ -213,15 +256,22 @@ async function displayOverrideCSP() {
 
 }
 
+/**
+ * Install a new CSP override with the contents of the textarea
+ */
 async function updateOverrideCSP() {
   const overrideCSP = document.getElementById('override-csp');
   const cspText = overrideCSP.value;
   await Rules.installOverrideRule(cspText);
-  displayDialog("Please reload page for changes to take effect");
+  displayReloadDialog();
   displayCspAnalysis(cspText);
 }
 
 
+/**
+ * Switch the page to display the content for the speciried mode
+ * @param OverrideMode mode 
+ */
 function displayMode(mode) {
 
   const modeSelector = document.getElementById('mode-selector');
@@ -252,9 +302,15 @@ function displayMode(mode) {
 
 }
 
+/**
+ * Load and display the current page's CSP details, depending on the active mode
+ */
 async function loadDetailsForInspectedwindow() {
+  
+  const url = await Rules.getCurrentTabURL();
+  const rule = await Rules.getActiveRule(url);
 
-  let mode = await Rules.detectOverrideMode();
+  let mode = await Rules.detectOverrideMode(rule);
   hideDialog();
   displayMode(mode);
 
@@ -311,7 +367,7 @@ async function onModeSelected(event) {
       if (existingCSP) {
         await Rules.installOverrideRule(existingCSP);
       } else {
-        displayDialog("Please reload page for changes to take effect");
+        displayReloadDialog();
         await Rules.installOverrideRule(null);
       }
 
@@ -319,11 +375,11 @@ async function onModeSelected(event) {
 
     case OverrideMode.SUGGEST:
       await Rules.installReportingRule();
-      displayDialog("Please reload page for changes to take effect");
+      displayReloadDialog();
       break;
 
     default:
-      displayDialog("Please reload page for changes to take effect");
+      displayReloadDialog();
       break;
   }
 
@@ -332,6 +388,10 @@ async function onModeSelected(event) {
 
 }
 
+/**
+ * Click handler to apply the suggested CSP as the new CSP override
+ * @param Event event 
+ */
 async function onClickApplySuggestedCSP(event) {
 
   let suggestedCSP = document.getElementById('suggested-csp').value;
@@ -340,13 +400,21 @@ async function onClickApplySuggestedCSP(event) {
   }
 
   loadDetailsForInspectedwindow();
-  displayDialog("Please reload page for changes to take effect");
+  displayReloadDialog();
 }
 
+/**
+ * Click handler that asks the the CSP Suggest service to forget what it has captured for the current domain.
+ * @param Event event 
+ */
 async function onClickResetSuggestedCSP(event) {
   await resetSuggestedCSP();
 }
 
+/**
+ * Click handler for updating the override CSP
+ * @param Event event 
+ */
 async function onClickUpdateOverrideCSP(event) {
   await updateOverrideCSP();
 }

@@ -4,24 +4,38 @@ const DEFAULT_STARTER_CSP = "default-src 'none'; script-src 'self'; connect-src 
 
 export class Config {
 
+    /**
+     * Initilize the default config settings for the extension
+     */
     static initDefaults() {
 
         chrome.storage.sync.set({
-            reportService: DEFAULT_CSP_REPORT_SERVICE,
+            suggestService: DEFAULT_CSP_REPORT_SERVICE,
             starterCSP: DEFAULT_STARTER_CSP
         });
 
     }
 
-    static async getReportService() {
-        let { reportService } = await chrome.storage.sync.get(['reportService']);
-        return reportService;
+    /**
+     * Get the URL to use for the CSP Suggest service
+     * @returns string URL
+     */
+    static async getSuggestService() {
+        let { suggestService } = await chrome.storage.sync.get(['suggestService']);
+        return suggestService;
     }
 
-    static async setReportService(value) {
-        await chrome.storage.sync.set({ reportService: value });
+    /**
+     * Set the URL to use for the CSP Suggest service
+     * @param string value 
+     */
+    static async setSuggestService(value) {
+        await chrome.storage.sync.set({ suggestService: value });
     }
 
+    /**
+     * Gets an initial set of starter CSP as a baseline override for sites that have no existing policy
+     */
     static async getStarterCSP() {
         let { starterCSP } = await chrome.storage.sync.get(['starterCSP']);
         return starterCSP;

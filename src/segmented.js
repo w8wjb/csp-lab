@@ -1,3 +1,6 @@
+/**
+ * Web component that is designed to work similar to Apples's UISegmentedControl
+ */
 export class SegmentedControl extends HTMLElement {
 
     constructor() {

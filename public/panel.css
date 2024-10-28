@@ -13,6 +13,22 @@ h1, h2, h3, h4, h5 {
     margin: 0.5em 0px;
 }
 
+button {
+    display: inline-block;
+    padding: 0.5em 0.75em;
+    margin: 0px;
+    margin-top: 0.5em;
+    font-weight: bold;
+    border: 1px solid rgb(142, 142, 142);
+    background-color: rgb(239, 239, 239);
+    border-radius: 6px;
+    cursor: pointer;
+}
+
+button:active {
+    background-color: rgb(142, 142, 142);
+}
+
 #csp-evaluation {
     margin-top: 1em;
 }
@@ -28,16 +44,6 @@ h1, h2, h3, h4, h5 {
 
 td.comments {
     padding-left: 1em;
-}
-
-button {
-    padding: 0.5em 0.75em;
-    margin: 0px;
-    font-weight: bold;
-    border: 1px solid #666666;
-    border-radius: 8px;
-    margin: 0 0.5em;
-    cursor: pointer;
 }
 
 .indicator {

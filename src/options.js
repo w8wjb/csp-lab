@@ -1,53 +1,49 @@
 import { Config } from "./config";
+import { OverrideMode, Rules } from "./rules";
+
+var ruleRowTemplate = null;
 
 async function refresh() {
-    if (chrome.declarativeNetRequest) {
-        const rules = await chrome.declarativeNetRequest.getDynamicRules();
-        renderRules(rules);
-    }
+    const rules = await chrome.declarativeNetRequest.getDynamicRules();
+    renderRules(rules);
 
-    if (chrome.storage) {
-        document.getElementById('suggest-service').value = await Config.getReportService();
-    }
-
+    document.getElementById('suggest-service').value = await Config.getSuggestService();
 }
 
-function createChild(tagName, className, parent) {
-    let child = document.createElement(tagName);
-    if (className) {
-        child.className = className;
-    }
-    parent.appendChild(child);
-    return child;
-}
-
-
-function renderRules(rules) {
+async function renderRules(rules) {
     const ruleList = document.getElementById('ruleList');
 
     ruleList.replaceChildren();
+
     for (const rule of rules) {
 
-        let row = createChild('tr', '', ruleList);
-
-        let cellWebsite = createChild('td', '', row);
+        let mode = await Rules.detectOverrideMode(rule);
 
         let websiteURL = rule.condition['regexFilter'].replace('^', '');
-        let websiteLink = createChild('a', '', cellWebsite);
-        websiteLink.href = websiteURL;
-        websiteLink.appendChild(document.createTextNode(websiteURL));
 
-        let cellStatus = createChild('td', '', row);
-        cellStatus.appendChild(document.createTextNode('OVERRIDE'));
+        const ruleRow = document.importNode(ruleRowTemplate.content, true);
 
-        let cellActions = createChild('td', '', row);
-        let btnRemove = createChild('button', 'remove', cellActions);
-        createChild('i', 'fa-solid fa-trash-can', btnRemove);
-        btnRemove.addEventListener('click', function () {
-            removeRule(rule.id);
-        })
+        ruleRow
+            .querySelector('.site')
+            .textContent = websiteURL;
+
+        let modeDesc = 'OVERRIDE';
+        if (mode == OverrideMode.SUGGEST) {
+            modeDesc = 'SUGGEST';
+        }
+
+        ruleRow
+            .querySelector('.mode')
+            .textContent = modeDesc;
+
+        ruleRow
+            .querySelector('.remove')
+            .addEventListener('click', function () {
+                removeRule(rule.id);
+            })
 
 
+        ruleList.appendChild(ruleRow);
     }
 }
 
@@ -58,7 +54,19 @@ async function removeRule(id) {
     refresh();
 }
 
+async function onClickSaveOptions(event) {
+
+    const suggestService = document.getElementById('suggest-service').value
+    Config.setSuggestService(suggestService);
+
+
+}
+
 async function onContentLoaded() {
+
+    ruleRowTemplate = document.getElementById('ruleRowTemplate');
+    document.getElementById('save-options').addEventListener('click', onClickSaveOptions);
+
     refresh();
 }
 

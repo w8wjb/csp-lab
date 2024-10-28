@@ -12,6 +12,7 @@
 </head>
 
 <body>
+    <h1>CSP Lab Options</h1>
     <div class="extension-options">
         <table>
             <tr>
@@ -19,11 +20,7 @@
                 <td><input type="text" id="suggest-service" name="suggest-service" /></td>
             </tr>
         </table>
-        <div class="suggest-service-config">
-            
-            
-        </div>
-        <button>Save Options</button>
+        <button id="save-options">Save Options</button>
     </div>
 
     <h3>CSP Lab is active on these sites:</h3>
@@ -37,13 +34,18 @@
         </thead>
 
         <tbody id="ruleList">
-            <tr>
-                <td>https://www.example.com</td>
-                <td>OVERRIDE</td>
-                <td><button class="remove"><i class="fa-solid fa-trash-can"></i></button></td>
-            </tr>
+
         </tbody>
         <!-- Rule Items will be added here -->
     </table>
+
+    <template id="ruleRowTemplate">
+        <tr>
+            <td class="site">https://www.example.com</td>
+            <td class="mode">OVERRIDE</td>
+            <td><button class="remove"><i class="fa-solid fa-trash-can"></i></button></td>
+        </tr>
+    </template>
+
     <script src="./options.js"></script>
 </body>
