@@ -17,5 +17,5 @@
   "host_permissions": [
     "*://*/*"
   ],
-  "permissions": ["declarativeNetRequest", "declarativeNetRequestFeedback", "webNavigation", "webRequest", "storage"]
+  "permissions": ["declarativeNetRequestWithHostAccess", "webNavigation", "webRequest", "storage"]
 }
