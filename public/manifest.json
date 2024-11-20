@@ -15,7 +15,7 @@
   "devtools_page": "devtools.html",
   "options_page": "options.html",
   "host_permissions": [
-    "*://*/*"
+    "<all_urls>"
   ],
   "permissions": ["declarativeNetRequestWithHostAccess", "webNavigation", "webRequest", "storage"]
 }
